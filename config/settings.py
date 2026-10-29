@@ -2,10 +2,12 @@
 import os
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Subimos dos niveles para llegar a la raíz real del proyecto (donde está manage.py)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-this-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ['.onrender.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -19,6 +21,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # <--- ¡ESTE ERA EL QUE FALTABA!
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -28,6 +31,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -42,6 +46,7 @@ TEMPLATES = [
         },
     },
 ]
+
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
@@ -55,10 +60,9 @@ LANGUAGE_CODE = "es-co"
 TIME_ZONE = "America/Bogota"
 USE_I18N = True
 USE_TZ = True
+
 STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-ALLOWED_HOSTS = ['.onrender.com', '127.0.0.1', 'localhost']
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
