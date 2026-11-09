@@ -1,19 +1,180 @@
 {% extends 'inventario/base.html' %}
 {% load static %}
-{% block title %}HAWARD | Hardware para jugar en serio{% endblock %}
+{% block title %}HAWARD{% endblock %}
 {% block content %}
 <div class="announcement">🚚 ENVÍO GRATIS EN PEDIDOS DESDE $500.000 · PAGA A TU RITMO</div>
-<header class="store-header"><nav class="store-nav"><a class="store-brand" href="#inicio"><span class="store-mark">H</span>HA<span>WARD</span></a><div class="store-links"><a href="#inicio">Inicio</a><a href="#productos">Componentes</a><a href="#beneficios">Beneficios</a></div><div class="store-actions"><a class="store-manage" href="{% url 'crear_producto' %}">Administrar inventario</a><button class="icon-btn" type="button" aria-label="Carrito" onclick="showCart()">🛒 <span class="cart-count" id="cartCount">0</span></button></div></nav></header>
+<header class="store-header">
+  <nav class="store-nav">
+    <a class="store-brand" href="#inicio"><span class="store-mark">H</span>HA<span>WARD</span></a>
+    <div class="store-links">
+      <a href="#inicio">Inicio</a>
+      <a href="#productos">Componentes</a>
+      <a href="#beneficios">Beneficios</a>
+    </div>
+    <div class="store-actions">
+      <a class="store-manage" href="{% url 'crear_producto' %}">Administrar inventario</a>
+      <button class="icon-btn" type="button" aria-label="Carrito" onclick="showCart()">
+        🛒 <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </nav>
+</header>
+
 <main class="store-main">
-  <section class="store-hero" id="inicio"><div class="hero-copy"><div class="eyebrow">COMPONENTES SELECCIONADOS · GARANTÍA LOCAL</div><h1>Rendimiento<br><em>en cada pieza.</em></h1><p>Hardware para construir un equipo a tu medida. Componentes originales, asesoría especializada y respaldo para tu próxima configuración.</p><a class="primary" href="#productos">Ver componentes <span>→</span></a></div><div class="hero-art" aria-hidden="true"><span>HAWARD</span><small>HARDWARE · GAMING · CREACIÓN</small></div></section>
-  <section class="perks" id="beneficios"><div class="perk"><span class="perk-icon">↗</span><div><b>Envíos a todo Colombia</b><small>Seguimiento en cada pedido</small></div></div><div class="perk"><span class="perk-icon">✓</span><div><b>Compra con confianza</b><small>Garantía en todos los productos</small></div></div><div class="perk"><span class="perk-icon">i</span><div><b>Te ayudamos a elegir</b><small>Asesoría para armar tu PC</small></div></div></section>
-  <section class="catalog" id="productos"><div class="section-head"><div><div class="eyebrow">PIEZAS PARA TU PRÓXIMA BUILD</div><h2>Encuentra tu componente</h2></div><p id="resultCount">Productos disponibles</p></div><div class="toolbar"><div class="categories" id="categories"></div><input id="buscar" class="search" type="search" placeholder="⌕  Buscar componentes..." aria-label="Buscar productos"></div><div class="grid" id="grid"></div></section>
+  <section class="store-hero" id="inicio">
+    <div class="hero-copy">
+      <div class="eyebrow">COMPONENTES SELECCIONADOS · GARANTÍA LOCAL</div>
+      <h1>Rendimiento<br><em>en cada pieza.</em></h1>
+      <p>Hardware para construir un equipo a tu medida. Componentes originales, asesoría especializada y respaldo para tu próxima configuración.</p>
+      <a class="primary" href="#productos">Ver componentes <span>→</span></a>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <span>HAWARD</span>
+      <small>HARDWARE · GAMING · CREACIÓN</small>
+    </div>
+  </section>
+
+  <section class="perks" id="beneficios">
+    <div class="perk"><span class="perk-icon">↗</span><div><b>Envíos a todo Colombia</b><small>Seguimiento en cada pedido</small></div></div>
+    <div class="perk"><span class="perk-icon">✓</span><div><b>Compra con confianza</b><small>Garantía en todos los productos</small></div></div>
+    <div class="perk"><span class="perk-icon">i</span><div><b>Te ayudamos a elegir</b><small>Asesoría para armar tu PC</small></div></div>
+  </section>
+
+  <section class="catalog" id="productos">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">PIEZAS PARA TU PRÓXIMA BUILD</div>
+        <h2>Encuentra tus componentes</h2>
+        <p>Todas nuestras piezas son originales y con una garantía de 2 a 6 meses dependiendo del producto.</p>
+        <p>¡Aprovecha nuestras promociones!</p>
+      </div>
+      <p id="resultCount">Productos disponibles</p>
+    </div>
+
+    <!-- Barra de Filtros (Categoría, Marca y Búsqueda) -->
+    <div class="toolbar">
+      <div class="filter-group">
+        <select id="filter-category" class="filter-select">
+          <option value="all">Todas las piezas</option>
+          <option value="Procesadores">Procesadores</option>
+          <option value="Gráficas">Tarjetas Gráficas</option>
+          <option value="Boards">Motherboards</option>
+          <option value="Memoria RAM">Memoria RAM</option>
+          <option value="Almacenamiento">Almacenamiento</option>
+          <option value="Fuentes de poder">Fuentes de poder</option>
+          <option value="Gabinetes">Gabinetes</option>
+          <option value="Audífonos">Audífonos</option>
+          <option value="Mouse">Mouse</option>
+          <option value="Teclados">Teclados</option>
+          <option value="Monitores">Monitores</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select id="filter-brand" class="filter-select">
+          <option value="all">Todas las marcas</option>
+          <option value="AMD">AMD</option>
+          <option value="NVIDIA">NVIDIA</option>
+          <option value="ASUS">ASUS</option>
+          <option value="Corsair">Corsair</option>
+          <option value="Kingston">Kingston</option>
+          <option value="Logitech">Logitech</option>
+          <option value="Razer">Razer</option>
+          <option value="NZXT">NZXT</option>
+          <option value="HyperX">HyperX</option>
+          <option value="AOC">AOC</option>
+        </select>
+      </div>
+
+      <input id="buscar" class="search" type="search" placeholder="⌕  Buscar componentes..." aria-label="Buscar productos">
+    </div>
+
+    <!-- Contenedor donde se insertan las tarjetas de productos -->
+    <div class="grid" id="grid"></div>
+  </section>
 </main>
-<div class="compare-bar" id="compareBar" hidden><span id="compareLabel">Elige 2 componentes para compararlos</span><div><button class="compare-clear" id="compareClear" type="button">Limpiar</button><button class="compare-open" id="compareOpen" type="button" disabled>Comparar</button></div></div>
-<footer class="store-footer"><div class="footer-inner"><a class="store-brand" href="#inicio"><span class="store-mark">H</span>HA<span>WARD</span></a><span>© 2026 Haward Gaming · Hardware para jugar en serio</span><span>Precios en pesos colombianos (COP)</span></div></footer>
-<div class="toast" id="toast" role="status">Agregado al carrito</div>
-<dialog class="cart-dialog" id="cartDialog" aria-labelledby="cartTitle"><div class="cart-sheet"><div class="cart-head"><h2 id="cartTitle">Tu carrito</h2><button class="cart-close" type="button" aria-label="Cerrar carrito" onclick="closeCart()">×</button></div><div class="cart-items" id="cartItems" aria-live="polite"></div><div class="cart-foot"><div class="cart-total"><span>Total</span><span id="cartTotal">$0</span></div><p class="cart-note">El carrito se guarda en este navegador. Esta tienda todavía no procesa pagos ni pedidos.</p></div></div></dialog>
-<dialog class="compare-dialog" id="compareDialog" aria-labelledby="compareTitle"><div class="compare-sheet"><div class="cart-head"><h2 id="compareTitle">Comparar componentes</h2><button class="cart-close" id="compareClose" type="button" aria-label="Cerrar comparación">×</button></div><div class="compare-content" id="compareContent"></div></div></dialog>
+
+<div class="compare-bar" id="compareBar" hidden>
+  <span id="compareLabel">Elige 2 componentes para compararlos</span>
+  <div>
+    <button class="compare-clear" id="compareClear" type="button">Limpiar</button>
+    <button class="compare-open" id="compareOpen" type="button" disabled>Comparar</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="store-footer">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <a class="store-brand" href="#inicio"><span class="store-mark">H</span>HA<span>WARD</span></a>
+      <p class="footer-desc">Hardware de alto rendimiento para gaming y optimización de sistemas.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Navegación</h4>
+      <ul>
+        <li><a href="#inicio">Catálogo</a></li>
+        <li><a href="/admin/" target="_blank">Panel de Administración</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Legal y Datos</h4>
+      <ul>
+        <li><a href="#" onclick="alert('Términos y Condiciones: Uso exclusivo para simulación académica de inventario y comercio electrónico.'); return false;">Términos y Condiciones</a></li>
+        <li><a href="#" onclick="alert('Política de Privacidad: En cumplimiento de la Ley 1581 de 2012 de Protección de Datos, los datos simulados no se comparten con terceros.'); return false;">Política de Privacidad</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Más de nosotros</h4>
+      <div class="footer-socials">
+        <a href="#" target="_blank">YouTube</a>
+        <a href="#" target="_blank">Discord</a>
+        <a href="#" target="_blank">Instagram</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>© 2026 Haward Shop · Todos los derechos reservados.</span>
+      <span>Proyecto Académico · Ingeniería de Sistemas</span>
+    </div>
+  </div>
+</footer>
+
+<!-- DIÁLOGOS DE CARRITO Y COMPARACIÓN -->
+<dialog class="cart-dialog" id="cartDialog" aria-labelledby="cartTitle">
+  <div class="cart-sheet">
+    <div class="cart-head">
+      <h2 id="cartTitle">Tu carrito</h2>
+      <button class="cart-close" type="button" aria-label="Cerrar carrito" onclick="closeCart()">×</button>
+    </div>
+    <div class="cart-items" id="cartItems" aria-live="polite"></div>
+    <div class="cart-foot">
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cartTotal">$0</span>
+      </div>
+      <p class="cart-note">El carrito se guarda en este navegador. Esta tienda todavía no procesa pagos ni pedidos.</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="compare-dialog" id="compareDialog" aria-labelledby="compareTitle">
+  <div class="compare-sheet">
+    <div class="cart-head">
+      <h2 id="compareTitle">Comparar componentes</h2>
+      <button class="cart-close" id="compareClose" type="button" aria-label="Cerrar comparación">×</button>
+    </div>
+    <div class="compare-content" id="compareContent"></div>
+  </div>
+</dialog>
+
 {{ productos_json|json_script:"product-data" }}
 {% endblock %}
-{% block extra_scripts %}<script src="{% static 'inventario/tienda.js' %}?v=compare-1" defer></script>{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'inventario/tienda.js' %}?v=compare-2" defer></script>
+{% endblock %}

@@ -25,7 +25,7 @@ def lista_productos(request):
             "price": producto.precio,
             "stock": producto.cantidad,
             "icon": (producto.marca or producto.nombre)[:18],
-            "image": producto.imagen_url,
+            'imagen': producto.imagen.url if producto.imagen else ''
         }
         for producto in productos
     ]

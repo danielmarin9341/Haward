@@ -7,7 +7,7 @@ class Producto(models.Model):
     categoria = models.CharField("categoría", max_length=80, blank=True)
     marca = models.CharField("marca", max_length=80, blank=True)
     referencia = models.CharField("referencia", max_length=100, blank=True)
-    imagen_url = models.URLField("URL de imagen", blank=True)
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
     cantidad = models.PositiveIntegerField("cantidad", default=0)
     precio = models.DecimalField(
         "precio unitario", max_digits=12, decimal_places=2,
