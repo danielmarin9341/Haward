@@ -13,6 +13,11 @@ class Producto(models.Model):
         "precio unitario", max_digits=12, decimal_places=2,
         default=0, validators=[MinValueValidator(0)],
     )
+    en_oferta = models.BooleanField("en promoción", default=False)
+    precio_oferta = models.DecimalField(
+        "precio de oferta", max_digits=12, decimal_places=2,
+        blank=True, null=True, validators=[MinValueValidator(0)],
+    )
     descripcion = models.TextField("descripción", blank=True)
     creado = models.DateTimeField("fecha de registro", auto_now_add=True)
 

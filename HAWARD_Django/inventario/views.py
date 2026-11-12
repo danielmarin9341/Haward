@@ -22,10 +22,12 @@ def lista_productos(request):
             "name": producto.nombre,
             "cat": producto.categoria or "Otros",
             "spec": producto.descripcion or producto.referencia or producto.marca or "Hardware",
-            "price": producto.precio,
+            "price": float(producto.precio),
             "stock": producto.cantidad,
             "icon": (producto.marca or producto.nombre)[:18],
-            'imagen': producto.imagen.url if producto.imagen else ''
+            "imagen": producto.imagen.url if producto.imagen else '',
+            "is_on_sale": producto.en_oferta,
+            "sale_price": float(producto.precio_oferta) if producto.precio_oferta else None,
         }
         for producto in productos
     ]
@@ -38,7 +40,7 @@ def lista_productos(request):
 
 
 def crear_producto(request):
-    form = ProductoForm(request.POST or None)
+    form = ProductoForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Producto agregado al inventario.")
@@ -48,7 +50,7 @@ def crear_producto(request):
 
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
-    form = ProductoForm(request.POST or None, instance=producto)
+    form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Producto actualizado.")
