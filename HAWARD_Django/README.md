@@ -28,14 +28,17 @@ Abre <http://127.0.0.1:8000/>. Crear, editar y eliminar productos requiere inici
 - `DJANGO_SECRET_KEY`: obligatoria cuando `DJANGO_DEBUG` no es `1`.
 - `DJANGO_DEBUG`: solo `1` en desarrollo local; por defecto está apagado.
 - `DATABASE_URL`: URL de PostgreSQL. Sin ella se usa SQLite, que en Render se borra en cada despliegue.
+- `HAWARD_INSTRUCCIONES_TRANSFERENCIA`: texto que ve el cliente al pagar por transferencia (tu cuenta o número de Nequi).
 
-Pruebas: `python manage.py test`. Para iniciar desde IntelliJ, ejecuta `src/Main.java` después de instalar las dependencias y aplicar las migraciones.
+Pruebas: `DJANGO_DEBUG=1 python manage.py test` (en PowerShell, define antes `$env:DJANGO_DEBUG = "1"`). Para iniciar desde IntelliJ, ejecuta `src/Main.java` después de instalar las dependencias y aplicar las migraciones.
 
 ## Funciones
 
 - Listar y buscar productos por nombre, categoría, marca o referencia.
 - Agregar, editar y eliminar productos.
 - Ver el total de referencias y unidades disponibles.
+- Carrito y pago en `/pagar/`: datos de entrega, pago contra entrega o por transferencia, envío gratis desde $500.000 (si no, $15.000).
+- Cada compra crea un pedido y descuenta el stock. Los pedidos se gestionan en `/admin/` (marcar pagado, enviado, entregado, o cancelar devolviendo el stock).
 - Administrar productos también desde `/admin/` después de crear un superusuario con `python manage.py createsuperuser`.
 
 La base de datos local `db.sqlite3` se crea al ejecutar las migraciones y no se sube a GitHub (está en `.gitignore`).

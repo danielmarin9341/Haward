@@ -96,6 +96,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Los usuarios sin sesión se envían al login del administrador
 LOGIN_URL = "admin:login"
 
+# Texto que ve el cliente al pagar por transferencia (pon aquí tus datos bancarios / número de Nequi)
+TRANSFERENCIA_INSTRUCCIONES = os.environ.get(
+    "HAWARD_INSTRUCCIONES_TRANSFERENCIA",
+    "Te contactaremos por correo o teléfono con los datos para realizar la transferencia. "
+    "Tu pedido queda reservado mientras confirmamos el pago.",
+)
+
 # Configuración para que WhiteNoise comprima y guarde en caché los estáticos eficientemente
 STORAGES = {
     "default": {

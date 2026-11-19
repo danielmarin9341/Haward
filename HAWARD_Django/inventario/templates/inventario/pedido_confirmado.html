@@ -1,0 +1,58 @@
+{% extends 'inventario/base.html' %}
+{% load static %}
+{% block title %}Pedido {{ pedido.referencia }} | HAWARD{% endblock %}
+{% block content %}
+<header class="store-header">
+  <nav class="store-nav">
+    <a class="store-brand" href="{% url 'lista_productos' %}"><span class="store-mark">H</span>HA<span>WARD</span></a>
+    <div class="store-actions">
+      <a class="store-manage" href="{% url 'lista_productos' %}">Volver a la tienda</a>
+    </div>
+  </nav>
+</header>
+
+<main class="checkout-page confirm-page">
+  <div class="confirm-head">
+    <div class="confirm-check" aria-hidden="true">✓</div>
+    <div class="eyebrow">PEDIDO RECIBIDO</div>
+    <h2>¡Gracias por tu compra, {{ pedido.nombre }}!</h2>
+    <p class="muted">Tu referencia es <strong class="confirm-ref">{{ pedido.referencia }}</strong>. Guarda esta página: es tu comprobante.</p>
+    <span class="status-pill status-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+  </div>
+
+  <div class="checkout-grid">
+    <section class="checkout-summary">
+      <h3>Productos</h3>
+      {% for item in items %}
+      <div class="summary-line">
+        <div><strong>{{ item.nombre }}</strong><small>{{ item.cantidad }} × ${{ item.precio_unitario|floatformat:"0g" }}</small></div>
+        <div class="summary-price">${{ item.subtotal|floatformat:"0g" }}</div>
+      </div>
+      {% endfor %}
+      <dl class="summary-totals">
+        <div><dt>Subtotal</dt><dd>${{ pedido.subtotal|floatformat:"0g" }}</dd></div>
+        <div><dt>Envío</dt><dd>{% if pedido.envio == 0 %}Gratis{% else %}${{ pedido.envio|floatformat:"0g" }}{% endif %}</dd></div>
+        <div class="summary-total"><dt>Total</dt><dd>${{ pedido.total|floatformat:"0g" }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="checkout-summary">
+      <h3>Entrega y pago</h3>
+      <p><strong>{{ pedido.nombre }}</strong><br>{{ pedido.direccion }}, {{ pedido.ciudad }}<br>{{ pedido.telefono }} · {{ pedido.email }}</p>
+      <p><strong>Método de pago:</strong> {{ pedido.get_metodo_pago_display }}</p>
+      {% if pedido.metodo_pago == 'transferencia' %}
+        <div class="summary-notice">{{ instrucciones_transferencia }}</div>
+      {% else %}
+        <div class="summary-notice">Pagas ${{ pedido.total|floatformat:"0g" }} en efectivo o por transferencia cuando recibas tu pedido.</div>
+      {% endif %}
+      {% if pedido.notas %}<p class="muted"><strong>Notas:</strong> {{ pedido.notas }}</p>{% endif %}
+    </section>
+  </div>
+</main>
+
+{% if limpiar_carrito %}
+<script>
+  try { localStorage.removeItem('hawardCart'); } catch (e) { /* sin almacenamiento disponible */ }
+</script>
+{% endif %}
+{% endblock %}
