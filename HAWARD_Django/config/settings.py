@@ -2,10 +2,29 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-this-key")
-DEBUG = True
+
+# DEBUG solo se activa con DJANGO_DEBUG=1 (en local). En producción queda apagado.
+DEBUG = os.environ.get("DJANGO_DEBUG") == "1"
+
+# La clave secreta de desarrollo solo se permite con DEBUG; en producción es obligatoria.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "dev-only-change-this-key"
+    else:
+        raise ImproperlyConfigured(
+            "Define la variable de entorno DJANGO_SECRET_KEY (o DJANGO_DEBUG=1 en local)."
+        )
+
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "haward.onrender.com"]
+CSRF_TRUSTED_ORIGINS = ["https://haward.onrender.com"]
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -19,7 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -52,16 +71,30 @@ DATABASES = {
     }
 }
 
+# En producción (p. ej. Render) define DATABASE_URL con una base PostgreSQL:
+# SQLite en el disco de Render se borra en cada despliegue.
+if os.environ.get("DATABASE_URL"):
+    import dj_database_url
+
+    DATABASES["default"] = dj_database_url.config(conn_max_age=600)
+
 LANGUAGE_CODE = "es-co"
 TIME_ZONE = "America/Bogota"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 STATICFILES_DIRS = [
-    BASE_DIR / 'inventario' / 'static',
+    BASE_DIR / "static",
 ]
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Imágenes subidas desde el formulario de productos
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Los usuarios sin sesión se envían al login del administrador
+LOGIN_URL = "admin:login"
 
 # Configuración para que WhiteNoise comprima y guarde en caché los estáticos eficientemente
 STORAGES = {

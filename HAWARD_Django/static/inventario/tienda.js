@@ -29,6 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return '$' + Number(amount).toLocaleString('es-CO');
   }
 
+  // Escapa texto que viene de la base de datos o del navegador antes de usarlo en innerHTML
+  function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+  }
+
   // Renderizar productos aplicando filtros de categoría, marca y búsqueda
   function renderProducts() {
     if (!grid) return;
@@ -79,16 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Imagen del producto o contenedor alternativo si no tiene
       const imgHtml = product.imagen
-          ? `<img src="${product.imagen}" alt="${product.name}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">`
+          ? `<img src="${escapeHtml(product.imagen)}" alt="${escapeHtml(product.name)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">`
           : `<div style="width: 100%; height: 150px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 10px; color: #555; font-size: 12px; font-weight: 600;">HAWARD HARDWARE</div>`;
 
       return `
                 <div class="product-card" style="background: #121212; border: 1px solid #222; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s;">
                     <div>
                         ${imgHtml}
-                        <div style="font-size: 11px; color: #06b6d4; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">${product.cat}</div>
-                        <h3 style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">${product.name}</h3>
-                        <p style="font-size: 12px; color: #aaa; margin-bottom: 12px; line-height: 1.4;">${product.spec}</p>
+                        <div style="font-size: 11px; color: #06b6d4; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">${escapeHtml(product.cat)}</div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">${escapeHtml(product.name)}</h3>
+                        <p style="font-size: 12px; color: #aaa; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(product.spec)}</p>
                     </div>
                     <div>
                         <div style="font-size: 11px; color: ${isOutOfStock ? '#ef4444' : '#10b981'}; margin-bottom: 8px; font-weight: 600;">
@@ -167,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #222;">
                     <div>
-                        <div style="font-weight: 700; color: #fff; font-size: 14px;">${item.name}</div>
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">${escapeHtml(item.name)}</div>
                         <div style="font-size: 12px; color: #888;">${formatMoney(item.price)} x ${item.qty}</div>
                     </div>
                     <div style="font-weight: 800; color: #06b6d4;">${formatMoney(subtotal)}</div>

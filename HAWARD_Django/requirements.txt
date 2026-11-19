@@ -1,5 +1,6 @@
 django
 gunicorn
 whitenoise
-psycopg2-binary  # (o el conector de base de datos que uses)
+psycopg2-binary
+dj-database-url
 Pillow

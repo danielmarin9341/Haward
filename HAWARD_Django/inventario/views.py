@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -39,6 +40,7 @@ def lista_productos(request):
     return render(request, "inventario/lista.html", contexto)
 
 
+@staff_member_required
 def crear_producto(request):
     form = ProductoForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
@@ -48,6 +50,7 @@ def crear_producto(request):
     return render(request, "inventario/formulario.html", {"form": form, "titulo": "Agregar producto"})
 
 
+@staff_member_required
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
@@ -58,6 +61,7 @@ def editar_producto(request, pk):
     return render(request, "inventario/formulario.html", {"form": form, "titulo": "Editar producto"})
 
 
+@staff_member_required
 def eliminar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == "POST":
