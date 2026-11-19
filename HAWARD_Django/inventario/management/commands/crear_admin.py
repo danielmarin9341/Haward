@@ -30,4 +30,4 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.WARNING(f"El usuario '{username}' ya existe.")
-            )git add
+            )
