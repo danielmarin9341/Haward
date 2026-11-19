@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Crea un superusuario desde variables de entorno si no existe."
+    help = "Crea o actualiza un superusuario desde variables de entorno."
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -20,14 +20,18 @@ class Command(BaseCommand):
             )
             return
 
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_superuser(
-                username=username, email=email, password=password
-            )
-            self.stdout.write(
-                self.style.SUCCESS(f"Superusuario '{username}' creado.")
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING(f"El usuario '{username}' ya existe.")
-            )
+        user, created = User.objects.get_or_create(
+            username=username, defaults={"email": email}
+        )
+        if email:
+            user.email = email
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_active = True
+        user.set_password(password)
+        user.save()
+
+        action = "creado" if created else "actualizado"
+        self.stdout.write(
+            self.style.SUCCESS(f"Superusuario '{username}' {action} correctamente.")
+        )
