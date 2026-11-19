@@ -157,7 +157,8 @@
         <span>Total</span>
         <span id="cartTotal">$0</span>
       </div>
-      <p class="cart-note">El carrito se guarda en este navegador. Esta tienda todavía no procesa pagos ni pedidos.</p>
+      <p class="cart-note" id="cartShipNote">Envío gratis en pedidos desde ${{ envio_gratis_desde|floatformat:"0g" }}.</p>
+      <a class="button button-primary cart-pay" id="checkoutLink" href="{% url 'checkout' %}" hidden>Ir a pagar</a>
     </div>
   </div>
 </dialog>
@@ -176,5 +177,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'inventario/tienda.js' %}?v=compare-2" defer></script>
+<script src="{% static 'inventario/tienda.js' %}?v=tienda-3" defer></script>
 {% endblock %}

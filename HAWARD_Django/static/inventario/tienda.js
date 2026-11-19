@@ -1,211 +1,260 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. Cargar los productos inyectados por Django de forma segura
-  const rawDataElement = document.getElementById('product-data');
-  let products = [];
+(() => {
+  const products = JSON.parse(document.querySelector('#product-data')?.textContent || '[]');
+  const CART_KEY = 'hawardCart';
+  const compareIds = new Set();
+  const cart = {};
 
-  if (rawDataElement) {
-    try {
-      products = JSON.parse(rawDataElement.textContent);
-    } catch (e) {
-      console.error("Error al parsear los datos de la tienda:", e);
+  // Recupera el carrito guardado, ajustado al stock actual
+  try {
+    const saved = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
+    for (const [id, quantity] of Object.entries(saved)) {
+      const product = products.find(item => String(item.id) === id);
+      if (product && Number.isInteger(quantity) && quantity > 0 && product.stock > 0) {
+        cart[id] = Math.min(quantity, product.stock);
+      }
     }
-  }
+  } catch { /* carrito vacío si el almacenamiento falla */ }
 
-  // Estado del carrito guardado en el navegador
-  let cart = JSON.parse(localStorage.getItem('haward_cart')) || [];
+  const money = value => '$' + Number(value).toLocaleString('es-CO');
+  // Escapa todo texto que viene de la base de datos antes de usarlo en innerHTML
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
 
-  // Referencias a elementos del DOM
-  const grid = document.getElementById('grid');
-  const filterCategory = document.getElementById('filter-category');
-  const filterBrand = document.getElementById('filter-brand');
+  const categorySelect = document.getElementById('filter-category');
+  const brandSelect = document.getElementById('filter-brand');
   const searchInput = document.getElementById('buscar');
+  const grid = document.getElementById('grid');
   const resultCount = document.getElementById('resultCount');
-  const cartCount = document.getElementById('cartCount');
-  const cartItemsContainer = document.getElementById('cartItems');
-  const cartTotal = document.getElementById('cartTotal');
 
-  // Función para formatear dinero en pesos colombianos
-  function formatMoney(amount) {
-    return '$' + Number(amount).toLocaleString('es-CO');
-  }
+  const unitPrice = product => (product.is_on_sale && product.sale_price !== null) ? product.sale_price : product.price;
 
-  // Escapa texto que viene de la base de datos o del navegador antes de usarlo en innerHTML
-  function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-  }
-
-  // Renderizar productos aplicando filtros de categoría, marca y búsqueda
-  function renderProducts() {
-    if (!grid) return;
-
-    const selectedCat = filterCategory ? filterCategory.value : 'all';
-    const selectedBrand = filterBrand ? filterBrand.value : 'all';
-    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-
-    const filtered = products.filter(p => {
-      const matchCat = selectedCat === 'all' || p.cat === selectedCat;
-      const matchBrand = selectedBrand === 'all' ||
-          (p.icon && p.icon.toLowerCase().includes(selectedBrand.toLowerCase())) ||
-          (p.name && p.name.toLowerCase().includes(selectedBrand.toLowerCase()));
-      const matchSearch = !query ||
-          p.name.toLowerCase().includes(query) ||
-          p.cat.toLowerCase().includes(query) ||
-          p.spec.toLowerCase().includes(query);
-      return matchCat && matchBrand && matchSearch;
+  // Llena los filtros con las categorías y marcas que existen en el catálogo
+  function fillSelect(select, values) {
+    if (!select) return;
+    while (select.options.length > 1) select.remove(1);
+    [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es')).forEach(value => {
+      select.add(new Option(value, value));
     });
+  }
+  fillSelect(categorySelect, products.map(product => product.cat));
+  fillSelect(brandSelect, products.map(product => product.brand));
+
+  function renderProducts(items, animate) {
+    if (!grid) return;
+    grid.classList.toggle('animate', Boolean(animate));
 
     if (resultCount) {
-      resultCount.textContent = `${filtered.length} componentes encontrados`;
+      resultCount.textContent = `${items.length} ${items.length === 1 ? 'producto disponible' : 'productos disponibles'}`;
     }
 
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">No se encontraron componentes con los filtros seleccionados.</div>`;
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="empty">No se encontraron componentes con estos filtros.</div>';
       return;
     }
 
-    grid.innerHTML = filtered.map(product => {
-      const inCart = cart.find(item => item.id === product.id);
-      const inCartQty = inCart ? inCart.qty : 0;
-      const isOutOfStock = product.stock <= 0;
+    grid.innerHTML = items.map((product, index) => {
+      const isCompared = compareIds.has(String(product.id));
+      const quantity = cart[product.id] || 0;
+      const outOfStock = product.stock <= 0;
+      const onSale = product.is_on_sale && product.sale_price !== null;
 
-      // Lógica de precios: Normal vs Oferta
-      let priceHtml = '';
-      if (product.is_on_sale && product.sale_price !== null && !isNaN(product.sale_price)) {
-        priceHtml = `
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-size: 13px; text-decoration: line-through; color: #888;">${formatMoney(product.price)}</span>
-                        <span style="font-size: 10px; background: rgba(236, 72, 153, 0.2); color: #ec4899; border: 1px solid #ec4899; padding: 2px 6px; border-radius: 4px; font-weight: 800;">OFERTA</span>
-                    </div>
-                    <div style="font-size: 18px; font-weight: 900; color: #ec4899; margin-bottom: 4px;">${formatMoney(product.sale_price)}</div>
-                `;
-      } else {
-        priceHtml = `<div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 4px;">${formatMoney(product.price)}</div>`;
-      }
+      const art = product.imagen
+        ? `<img src="${esc(product.imagen)}" alt="${esc(product.name)}" loading="lazy">`
+        : `<span>${esc(product.icon || 'HW')}</span>`;
 
-      // Imagen del producto o contenedor alternativo si no tiene
-      const imgHtml = product.imagen
-          ? `<img src="${escapeHtml(product.imagen)}" alt="${escapeHtml(product.name)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">`
-          : `<div style="width: 100%; height: 150px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 10px; color: #555; font-size: 12px; font-weight: 600;">HAWARD HARDWARE</div>`;
+      const action = outOfStock
+        ? '<button type="button" class="add" disabled>Agotado</button>'
+        : quantity > 0
+          ? `<div class="qty-control">
+               <button type="button" class="qty-btn" data-cart-step="-1" data-id="${product.id}" aria-label="Quitar uno">−</button>
+               <span>${quantity}</span>
+               <button type="button" class="qty-btn" data-cart-step="1" data-id="${product.id}" aria-label="Agregar uno" ${quantity >= product.stock ? 'disabled' : ''}>+</button>
+             </div>`
+          : `<button type="button" class="add" data-cart-step="1" data-id="${product.id}">Agregar</button>`;
 
       return `
-                <div class="product-card" style="background: #121212; border: 1px solid #222; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s;">
-                    <div>
-                        ${imgHtml}
-                        <div style="font-size: 11px; color: #06b6d4; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">${escapeHtml(product.cat)}</div>
-                        <h3 style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">${escapeHtml(product.name)}</h3>
-                        <p style="font-size: 12px; color: #aaa; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(product.spec)}</p>
-                    </div>
-                    <div>
-                        <div style="font-size: 11px; color: ${isOutOfStock ? '#ef4444' : '#10b981'}; margin-bottom: 8px; font-weight: 600;">
-                            ${isOutOfStock ? '● Agotado' : `● Stock disponible: ${product.stock}`}
-                        </div>
-                        ${priceHtml}
-                        <div style="display: flex; gap: 8px; margin-top: 12px;">
-                            <button type="button" class="buy-btn" data-id="${product.id}" 
-                                style="flex: 1; padding: 10px; background: ${isOutOfStock ? '#333' : '#06b6d4'}; color: ${isOutOfStock ? '#777' : '#000'}; border: none; border-radius: 6px; cursor: ${isOutOfStock ? 'not-allowed' : 'pointer'}; font-weight: 700; font-size: 12px;" 
-                                ${isOutOfStock ? 'disabled' : ''}>
-                                ${isOutOfStock ? 'Agotado' : `Comprar ${inCartQty > 0 ? '(' + inCartQty + ')' : ''}`}
-                            </button>
-                        </div>
-                    </div>
+        <article class="card" style="--i:${Math.min(index, 12)}">
+          <div class="product-art">
+            ${art}
+            <span class="badge">${esc(product.cat)}</span>
+            ${onSale ? '<span class="badge badge-sale">OFERTA</span>' : ''}
+          </div>
+          <div class="details">
+            <div>
+              <span class="category-label">${esc(product.brand || product.cat)}</span>
+              <h3>${esc(product.name)}</h3>
+              <p class="spec">${esc(product.spec)}</p>
+              <div class="stock ${outOfStock ? 'stock-empty' : ''}">${outOfStock ? 'Agotado' : `${product.stock} disponibles`}</div>
+            </div>
+            <div>
+              <div class="price-row">
+                <div class="price">
+                  ${onSale ? `<small class="old">${money(product.price)}</small>` : ''}
+                  ${money(unitPrice(product))}
                 </div>
-            `;
+                ${action}
+              </div>
+              <button type="button" class="compare-toggle ${isCompared ? 'selected' : ''}" data-compare-id="${product.id}">
+                ${isCompared ? '✓ En comparación' : 'Comparar'}
+              </button>
+            </div>
+          </div>
+        </article>`;
     }).join('');
-
-    // Escuchar clics en los botones de compra
-    document.querySelectorAll('.buy-btn').forEach(btn => {
-      if (!btn.disabled) {
-        btn.addEventListener('click', (e) => {
-          const id = Number(e.target.dataset.id);
-          addToCart(id);
-        });
-      }
-    });
   }
 
-  function addToCart(productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product || product.stock <= 0) return;
+  // Filtros combinados: categoría + marca + texto
+  function applyFilters(animate = true) {
+    const category = categorySelect ? categorySelect.value : 'all';
+    const brand = brandSelect ? brandSelect.value : 'all';
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-    const finalPrice = product.is_on_sale && product.sale_price !== null ? product.sale_price : product.price;
-    const existing = cart.find(item => item.id === productId);
-
-    if (existing) {
-      if (existing.qty < product.stock) {
-        existing.qty++;
-      } else {
-        alert('Has alcanzado el límite de stock disponible para este producto.');
-        return;
-      }
-    } else {
-      cart.push({ id: product.id, name: product.name, price: finalPrice, qty: 1 });
-    }
-
-    saveCart();
-    renderProducts();
-    renderCartModal();
+    const filtered = products.filter(product =>
+      (category === 'all' || product.cat === category) &&
+      (brand === 'all' || product.brand === brand) &&
+      (!query ||
+        product.name.toLowerCase().includes(query) ||
+        product.cat.toLowerCase().includes(query) ||
+        (product.brand || '').toLowerCase().includes(query) ||
+        (product.spec || '').toLowerCase().includes(query))
+    );
+    renderProducts(filtered, animate);
   }
 
   function saveCart() {
-    localStorage.setItem('haward_cart', JSON.stringify(cart));
+    try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* ignorar */ }
+  }
+
+  function changeQuantity(id, step) {
+    const product = products.find(item => String(item.id) === id);
+    const next = (cart[id] || 0) + step;
+    if (!product || next < 0 || next > product.stock) return;
+    if (next === 0) delete cart[id]; else cart[id] = next;
+    saveCart();
+    applyFilters(false); // sin repetir la animación de entrada
     updateCartCount();
+    if (document.querySelector('#cartDialog')?.open) renderCart();
   }
 
   function updateCartCount() {
-    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-    if (cartCount) cartCount.textContent = totalQty;
+    const count = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
+    const countEl = document.querySelector('#cartCount');
+    if (countEl) countEl.textContent = count;
   }
 
-  function renderCartModal() {
-    if (!cartItemsContainer) return;
+  function updateCompareBar() {
+    const count = compareIds.size;
+    const bar = document.querySelector('#compareBar');
+    const label = document.querySelector('#compareLabel');
+    const openBtn = document.querySelector('#compareOpen');
+    if (bar) bar.hidden = count === 0;
+    if (label) label.textContent = `${count} de 2 componentes seleccionados`;
+    if (openBtn) openBtn.disabled = count !== 2;
+  }
 
-    if (cart.length === 0) {
-      cartItemsContainer.innerHTML = `<p style="text-align: center; color: #888; padding: 20px;">Tu carrito está vacío.</p>`;
-      if (cartTotal) cartTotal.textContent = formatMoney(0);
+  function showComparison() {
+    const selected = products.filter(product => compareIds.has(String(product.id)));
+    if (selected.length !== 2) return;
+
+    const rows = [
+      ['Categoría', product => product.cat],
+      ['Marca', product => product.brand || 'N/A'],
+      ['Precio', product => money(unitPrice(product))],
+      ['Especificaciones', product => product.spec || 'Sin especificaciones'],
+      ['Disponibilidad', product => product.stock > 0 ? `${product.stock} unidades` : 'Agotado'],
+    ];
+    const header = selected.map(product => `<th>${esc(product.name)}</th>`).join('');
+    const body = rows.map(([label, value]) =>
+      `<tr><th>${label}</th>${selected.map(product => `<td>${esc(value(product))}</td>`).join('')}</tr>`
+    ).join('');
+
+    document.querySelector('#compareContent').innerHTML =
+      `<table class="compare-table"><thead><tr><th>Característica</th>${header}</tr></thead><tbody>${body}</tbody></table>`;
+    document.querySelector('#compareDialog').showModal();
+  }
+
+  function renderCart() {
+    const entries = Object.entries(cart).filter(([id]) => products.some(product => String(product.id) === id));
+    const container = document.querySelector('#cartItems');
+    const checkoutLink = document.querySelector('#checkoutLink');
+    if (!container) return;
+
+    if (checkoutLink) checkoutLink.hidden = entries.length === 0;
+
+    if (!entries.length) {
+      container.innerHTML = '<div class="cart-empty">Tu carrito está vacío.<br>Agrega componentes para verlos aquí.</div>';
+      document.querySelector('#cartTotal').textContent = money(0);
       return;
     }
 
     let total = 0;
-    cartItemsContainer.innerHTML = cart.map(item => {
-      const subtotal = item.price * item.qty;
-      total += subtotal;
-      return `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #222;">
-                    <div>
-                        <div style="font-weight: 700; color: #fff; font-size: 14px;">${escapeHtml(item.name)}</div>
-                        <div style="font-size: 12px; color: #888;">${formatMoney(item.price)} x ${item.qty}</div>
-                    </div>
-                    <div style="font-weight: 800; color: #06b6d4;">${formatMoney(subtotal)}</div>
-                </div>
-            `;
+    container.innerHTML = entries.map(([id, quantity]) => {
+      const product = products.find(item => String(item.id) === id);
+      const price = unitPrice(product);
+      total += price * quantity;
+      const mark = product.imagen
+        ? `<img src="${esc(product.imagen)}" alt="">`
+        : esc(product.icon || 'HW');
+      return `<article class="cart-line">
+        <div class="cart-mark">${mark}</div>
+        <div class="cart-info">
+          <strong>${esc(product.name)}</strong>
+          <small>${money(price)} cada uno</small>
+          <div class="cart-qty">
+            <button type="button" data-cart-step="-1" data-id="${id}" aria-label="Quitar uno">−</button>
+            <span>${quantity}</span>
+            <button type="button" data-cart-step="1" data-id="${id}" aria-label="Agregar uno" ${quantity >= product.stock ? 'disabled' : ''}>+</button>
+          </div>
+        </div>
+        <div class="cart-price">${money(price * quantity)}</div>
+      </article>`;
     }).join('');
-
-    if (cartTotal) cartTotal.textContent = formatMoney(total);
+    document.querySelector('#cartTotal').textContent = money(total);
   }
 
-  // Eventos de filtros en tiempo real
-  if (filterCategory) filterCategory.addEventListener('change', renderProducts);
-  if (filterBrand) filterBrand.addEventListener('change', renderProducts);
-  if (searchInput) searchInput.addEventListener('input', renderProducts);
+  window.showCart = () => { renderCart(); document.querySelector('#cartDialog').showModal(); };
+  window.closeCart = () => document.querySelector('#cartDialog').close();
 
-  // Renderizado inicial al cargar la página
-  renderProducts();
+  categorySelect?.addEventListener('change', () => applyFilters());
+  brandSelect?.addEventListener('change', () => applyFilters());
+  searchInput?.addEventListener('input', () => applyFilters());
+
+  grid?.addEventListener('click', event => {
+    const compareBtn = event.target.closest('[data-compare-id]');
+    if (compareBtn) {
+      const id = compareBtn.dataset.compareId;
+      if (compareIds.has(id)) compareIds.delete(id);
+      else if (compareIds.size < 2) compareIds.add(id);
+      updateCompareBar();
+      applyFilters(false);
+      return;
+    }
+    const cartBtn = event.target.closest('[data-cart-step]');
+    if (cartBtn) changeQuantity(cartBtn.dataset.id, Number(cartBtn.dataset.cartStep));
+  });
+
+  document.querySelector('#compareOpen')?.addEventListener('click', showComparison);
+  document.querySelector('#compareClear')?.addEventListener('click', () => {
+    compareIds.clear();
+    updateCompareBar();
+    applyFilters(false);
+  });
+  document.querySelector('#compareClose')?.addEventListener('click', () => document.querySelector('#compareDialog').close());
+  document.querySelector('#compareDialog')?.addEventListener('click', event => {
+    if (event.target === event.currentTarget) event.currentTarget.close();
+  });
+
+  document.querySelector('#cartItems')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-cart-step]');
+    if (button) changeQuantity(button.dataset.id, Number(button.dataset.cartStep));
+  });
+  document.querySelector('#cartDialog')?.addEventListener('click', event => {
+    if (event.target === event.currentTarget) window.closeCart();
+  });
+
+  saveCart(); // guarda el carrito ya ajustado al stock
   updateCartCount();
-  renderCartModal();
-});
-
-// Funciones globales para abrir y cerrar el carrito desde el HTML
-function showCart() {
-  const dialog = document.getElementById('cartDialog');
-  if (dialog) dialog.showModal();
-}
-
-function closeCart() {
-  const dialog = document.getElementById('cartDialog');
-  if (dialog) dialog.close();
-}
+  updateCompareBar();
+  applyFilters();
+})();

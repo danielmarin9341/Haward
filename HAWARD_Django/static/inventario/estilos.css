@@ -832,3 +832,140 @@ button { cursor: pointer; }
     .details { padding: 12px; }
     .footer-inner { flex-direction: column; align-items: flex-start; }
 }
+/* ===== Tarjetas: animación de entrada, zoom de imagen y oferta ===== */
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.grid.animate .card {
+    animation: cardIn .45s ease both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.product-art img { transition: transform .4s ease; }
+.card:hover .product-art img { transform: scale(1.06); }
+
+.product-art .badge-sale {
+    left: auto;
+    right: 12px;
+    background: var(--grad-accent);
+    border-color: transparent;
+    color: #fff;
+}
+
+.price .old {
+    display: block;
+    text-decoration: line-through;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.cart-mark { overflow: hidden; }
+.cart-mark img { width: 100%; height: 100%; object-fit: contain; background: #06080d; }
+.cart-empty { padding: 36px 12px; text-align: center; color: var(--muted); line-height: 1.6; }
+.cart-empty a { color: var(--cyan); }
+
+.cart-qty { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.cart-qty button {
+    width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg); color: #fff; font-size: 15px; cursor: pointer;
+}
+.cart-qty button:disabled { opacity: .3; cursor: not-allowed; }
+.cart-qty span { min-width: 18px; text-align: center; font-size: 13px; font-weight: 700; }
+
+.cart-pay { display: block; width: 100%; margin-top: 12px; text-align: center; text-decoration: none; }
+.cart-note { margin: 0; color: var(--muted); font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .grid.animate .card { animation: none; }
+    .card, .product-art img { transition: none; }
+}
+
+/* ===== Pago y confirmación del pedido ===== */
+.checkout-page { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; }
+
+.checkout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.checkout-form, .checkout-summary {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    padding: 24px;
+}
+
+.checkout-form h3, .checkout-summary h3 { margin: 0 0 16px; font-size: 16px; color: #fff; }
+.checkout-form h3:not(:first-child) { margin-top: 28px; }
+
+.checkout-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.checkout-fields .field-wide { grid-column: 1 / -1; }
+.checkout-fields .field label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+.checkout-fields input, .checkout-fields textarea {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; font-size: 14px;
+}
+.checkout-fields input:focus, .checkout-fields textarea:focus {
+    outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(6, 182, 212, .18);
+}
+.checkout-form .error, .checkout-form .errors { color: var(--fuchsia); font-size: 12px; }
+.checkout-form .errors { margin-bottom: 16px; padding: 12px; border: 1px solid var(--fuchsia); border-radius: 8px; }
+.checkout-form .errors ul { margin: 0; padding-left: 18px; }
+
+.pay-methods div div { margin-bottom: 10px; }
+.pay-methods label {
+    display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 14px;
+    transition: border-color .2s, background .2s;
+}
+.pay-methods label:hover, .pay-methods label:has(input:checked) {
+    border-color: var(--cyan); background: rgba(6, 182, 212, .08);
+}
+.pay-note { font-size: 12px; margin: 4px 0 20px; }
+.pay-submit { width: 100%; padding: 14px; font-size: 15px; cursor: pointer; }
+.pay-submit:disabled { opacity: .4; cursor: not-allowed; }
+
+.checkout-summary { position: sticky; top: 90px; }
+.summary-line { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.confirm-page .summary-line { grid-template-columns: 1fr auto; }
+.summary-line strong { display: block; font-size: 13px; color: #fff; }
+.summary-line small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.summary-price { font-size: 13px; font-weight: 800; color: var(--cyan); }
+.summary-totals { margin: 16px 0 0; }
+.summary-totals div { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: var(--muted); }
+.summary-totals dt, .summary-totals dd { margin: 0; }
+.summary-totals .summary-total { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 14px; font-size: 18px; font-weight: 800; color: #fff; }
+.summary-notice { margin: 14px 0; padding: 12px; border: 1px solid rgba(6, 182, 212, .35); border-radius: 8px; background: rgba(6, 182, 212, .08); font-size: 13px; line-height: 1.5; }
+
+.confirm-head { text-align: center; margin-bottom: 32px; }
+.confirm-check {
+    display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 16px;
+    border-radius: 50%; background: var(--grad-cyan-blue); color: #fff; font-size: 30px;
+    animation: cardIn .5s ease both;
+}
+.confirm-ref { color: var(--cyan); letter-spacing: .08em; }
+.status-pill { display: inline-block; margin-top: 8px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(236, 72, 153, .15); color: var(--fuchsia); border: 1px solid var(--fuchsia); }
+.status-pagado, .status-enviado, .status-entregado { background: rgba(16, 185, 129, .15); color: #10b981; border-color: #10b981; }
+
+@media (max-width: 800px) {
+    .checkout-grid { grid-template-columns: 1fr; }
+    .checkout-summary { position: static; }
+    .checkout-fields { grid-template-columns: 1fr; }
+}
+
+/* Botones y utilidades usadas por los formularios */
+.muted { color: var(--muted); }
+.button {
+    display: inline-block; padding: 11px 18px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); color: var(--text); font: inherit; font-size: 13px; font-weight: 700;
+    text-decoration: none; cursor: pointer; transition: transform .2s, box-shadow .2s;
+}
+.button:hover { transform: translateY(-1px); }
+.button-primary { border: 0; background: var(--grad-cyan-blue); color: #fff; box-shadow: 0 4px 14px rgba(6, 182, 212, .3); }
+.button-primary:hover { box-shadow: 0 6px 20px rgba(6, 182, 212, .45); }
+.button-secondary { background: transparent; }
+.button-danger { border: 0; background: var(--fuchsia); color: #fff; }
